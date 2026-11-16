@@ -3,11 +3,10 @@ import socket
 
 app = Flask(__name__)
 
-# قائمة لتخزين الرسائل أو التنبيهات الواردة
-messages = []
+# قائمة لتخزين الرسائل أو التنبيهات
+messages = ["مرحباً! تم الاتصال بنجاح. في انتظار الرسائل..."]
 
 def get_local_ip():
-    """الحصول تلقائياً على عنوان IP الخاص بالجهاز على شبكة الواي فاي"""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(('10.255.255.255', 1))
@@ -20,37 +19,29 @@ def get_local_ip():
 
 @app.route('/')
 def index():
-    # كود HTML و JavaScript محقون بالكامل ليعمل بمجرد فتح الرابط
     html = '''
     <!DOCTYPE html>
     <html lang="ar" dir="rtl">
     <head>
         <meta charset="UTF-8">
-        <title>لوحة المراقبة المحقونة</title>
+        <title>لوحة مراقبة الرسائل</title>
+        <meta http-equiv="refresh" content="3">
         <style>
-            body { background: #0f172a; color: #38bdf8; font-family: monospace; padding: 20px; }
+            body { background: #0f172a; color: #38bdf8; font-family: Tahoma, sans-serif; padding: 20px; }
             h2 { border-bottom: 2px solid #1e293b; padding-bottom: 10px; color: #f43f5e; }
             .box { background: #1e293b; padding: 15px; border-radius: 8px; margin-top: 15px; }
-            .status { color: #4ade80; font-weight: bold; }
+            ul { padding-right: 20px; }
+            li { margin-bottom: 10px; background: #334155; padding: 10px; border-radius: 5px; color: #fff; }
         </style>
-        <script>
-            // كود JavaScript محقون لضمان الاتصال والتحديث الفوري
-            console.log("تم حقن سكريبت المراقبة بنجاح في متصفح الجوال المكسور.");
-            setInterval(function() {
-                // يمكنك هنا إضافة دوال لفحص أو إرسال حالة المتصفح دورياً للسيرفر
-            }, 3000);
-        </script>
     </head>
     <body>
-        <h2>🛡️ لوحة التحكم والمراقبة النشطة</h2>
-        <p>الحالة: <span class="status">متصل وجاهز للاستقبال</span></p>
+        <h2>📡 لوحة مراقبة الرسائل الحية</h2>
+        <p>🔄 يتم تحديث الصفحة تلقائياً كل 3 ثوانٍ...</p>
         <div class="box">
-            <h3>البيانات والرسائل المستقبلة:</h3>
-            <ul id="msgList">
+            <h3>الرسائل الواردة:</h3>
+            <ul>
             {% for m in messages %}
                 <li>{{ m }}</li>
-            {% else %}
-                <li>في انتظار تلقي البيانات...</li>
             {% endfor %}
             </ul>
         </div>
@@ -59,19 +50,16 @@ def index():
     '''
     return render_template_string(html, messages=messages)
 
-@app.route('/inject-data', methods=['POST'])
-def inject_data():
-    """نقطة استقبال البيانات المحقونة من الأجهزة أو المتصفح"""
+@app.route('/push', methods=['POST'])
+def push():
     data = request.json
-    if data and 'payload' in data:
-        messages.insert(0, data['payload'])
-        return {"status": "injected_successfully"}, 200
-    return {"status": "bad_request"}, 400
+    if data and 'msg' in data:
+        messages.insert(0, data['msg'])
+        return {"status": "success"}, 200
+    return {"status": "fail"}, 400
 
 if __name__ == '__main__':
     local_ip = get_local_ip()
     port = 5000
-    print(codes := f"\n[+] السيرفر يعمل بنجاح!")
-    print(f"[+] ارفع هذا الرابط وافتحه من المتصفح في الجوال المكسور:")
-    print(f"👉   http://{local_ip}:{port}\n")
+    print(f"\n[+] السيرفر يعمل على: http://{local_ip}:{port}\n")
     app.run(host='0.0.0.0', port=port)
